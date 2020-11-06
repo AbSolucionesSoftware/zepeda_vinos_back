@@ -54,7 +54,7 @@ adminCtrl.createAdmin = async (req, res) => {
 										expiresIn : '1h'
 									} */);
 									//token
-									//res.json(token);
+									res.json(token);
 								}
 							}
 						});
