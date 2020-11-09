@@ -54,7 +54,6 @@ tiendaCtrl.crearTienda = async (req, res) => {
         }
     })
 };
-
 tiendaCtrl.obtenerTienda = async (req, res) => {
     try {
         const tienda = await Tienda.find();

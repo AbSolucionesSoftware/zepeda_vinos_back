@@ -427,10 +427,6 @@ productosCtrl.addnumero = async (req, res, next) => {
 productosCtrl.subirImagen = (req, res, next) => {
 	imagen.upload(req, res, function(err) {
 		if (err) {
-			console.log(process.env.AWS_SECRET_ACCESS);
-			console.log(process.env.AWS_ACCESS_ID);
-			console.log(process.env.AWS_REGION);
-			console.log(err);
 			res.status(500).json({ message: 'formato de imagen no valido', err });
 		} else {
 			return next();
@@ -512,7 +508,7 @@ productosCtrl.subirImagen = (req, res, next) => {
 }; */
 
 productosCtrl.getProductosFiltrosDividos = async (req, res) => {
-	const { categoria, subcategoria, genero } = req.query
+	const { categoria = "", subcategoria = "", genero = "" } = req.query
 
 	var match = {};
 	if(categoria && !subcategoria && !genero){
