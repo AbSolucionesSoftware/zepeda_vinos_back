@@ -15,12 +15,16 @@ tiendaCtrl.subirImagen = async (req,res,next) => {
 tiendaCtrl.crearTienda = async (req, res) => {
     console.log(req.body);
     const {nombre,telefono,calle_numero,cp,colonia,ciudad,lat,lng,politicas,imagenCorp,linkFace,linkInsta,linkTweeter,estado} = req.body;
-    if(imagenCorp === null || imagenCorp === 'null'){
+    let phone = "";
+    if(telefono){
+        phone = telefono.trim(" ");
+    }
+    if(imagenCorp === null || imagenCorp === 'null' || imagenCorp === undefined || imagenCorp === 'undefined'){
         imagenCorp = '';
     }
     const newTienda = new Tienda({
         nombre: nombre,
-        telefono: telefono,
+        telefono: phone,
         direccion:[{
             calle_numero:calle_numero,
             cp:cp,
