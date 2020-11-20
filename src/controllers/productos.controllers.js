@@ -38,7 +38,7 @@ productosCtrl.deleteImagen = async (req, res) => {
 
 productosCtrl.getPromociones = async (req, res,next) => {
 	try {
-		const promociones = await promocionModel.find().populate('productoPromocion');
+		const promociones = await promocionModel.find({idPromocionMasiva:{$exists:false}}).populate('productoPromocion');
 		res.status(200).json(promociones);
 	} catch (err) {
 		res.status(500).json({ message: 'Error en el servidor', err });
@@ -474,30 +474,26 @@ productosCtrl.subirImagen = (req, res, next) => {
 		res.status(500).json({ message: "Error en el servidor",err })
 	}
 }; */
-/* productosCtrl.getProductosSimilares = async (req, res) => {
-	console.log(req.query)
-	const { nombre, categoria, subcategoria } = req.query
+productosCtrl.getProductoSinPaginacion = async (req, res) => {
 	try {
-		await Producto.aggregate([
-			{
-				$match:{
-					$or: [
-						{nombre: { $regex: '.*' + nombre + '.*', $options: 'i' }},
-						{categoria: { $regex: '.*' + categoria + '.*', $options: 'i' }},
-						{subCategoria: { $regex: '.*' + subcategoria + '.*', $options: 'i' }},
-
-					],
+		await Producto.aggregate(
+			[
+				{
+					$lookup: {
+						from: 'promocions',
+						localField: '_id',
+						foreignField: 'productoPromocion',
+						as: 'promocion'
+					}
 				}
-			}
-		],
-			(err, postStored) => {
+			],(err, response) => {
 				if (err) {
 					res.status(500).json({ message: 'Error en el servidor', err });
 				} else {
-					if (!postStored) {
+					if (!response) {
 						res.status(404).json({ message: 'Error al mostrar Productos' });
 					} else {
-						res.status(200).json({ posts: postStored });
+						res.status(200).json(response);
 					}
 				}
 			}
@@ -505,7 +501,7 @@ productosCtrl.subirImagen = (req, res, next) => {
 	} catch (err) {
 		res.status(500).json({ message: 'Error en el servidor', err });
 	}
-}; */
+};
 
 productosCtrl.getProductosFiltrosDividos = async (req, res) => {
 	const { categoria = "", subcategoria = "", genero = "" } = req.query
@@ -568,7 +564,7 @@ productosCtrl.getProductosFiltrosDividos = async (req, res) => {
 						from: 'promocions',
 						localField: '_id',
 						foreignField: 'productoPromocion',
-						as: 'todos'
+						as: 'promocion'
 					}
 				},
 				{
@@ -602,7 +598,7 @@ productosCtrl.getProductosFiltrados = async (req, res) => {
 						from: 'promocions',
 						localField: '_id',
 						foreignField: 'productoPromocion',
-						as: 'todos'
+						as: 'promocion'
 					}
 				},
 				{
@@ -648,7 +644,7 @@ productosCtrl.getProductos = async (req, res) => {
 					from: 'promocions',
 					localField: '_id',
 					foreignField: 'productoPromocion',
-					as: 'todos'
+					as: 'promocion'
 				}
 			}
 		]);
@@ -737,6 +733,7 @@ productosCtrl.createProducto = async (req, res) => {
 productosCtrl.updateProducto = async (req, res, next) => {
 	try {
 		const productoDeBase = await Producto.findById(req.params.id);
+		console.log(req.body);
 		//Construir nuevo producto
 		const nuevoProducto = req.body;
 		//Verificar si mandaron imagen
@@ -750,6 +747,7 @@ productosCtrl.updateProducto = async (req, res, next) => {
 		/* if(productoDeBase.subCategoria !== nuevoProducto.subCategoria){
 			await Producto.updateMany({subCategoria: productoDeBase.subCategoria},{$set:{subCategoria: nuevoProducto.subCategoria}},{multi:true});
 		} */
+
 		const producto = await Producto.findByIdAndUpdate(req.params.id, nuevoProducto);
 
 		const productoNuevo = await Producto.findById(req.params.id);
@@ -766,8 +764,6 @@ productosCtrl.updateProducto = async (req, res, next) => {
 				productoNuevo.activo = false;
 				await Producto.findByIdAndUpdate(productoNuevo._id,productoNuevo);
 			}
-
-
 		}else if(productoNuevo.numeros.length > 0){
 			console.log("entro a numero");
 			let contador = 0;
@@ -858,29 +854,70 @@ productosCtrl.crecarFiltrosNavbar = async (req, res, next) => {
 	try {
 		 await Producto.aggregate([ {"$group" : {_id:"$categoria"}}],async function (err, categorias){
 			arrayCategorias = []
+			console.log(categorias);
+			console.log(categorias.length);
 			for(i = 0; i < categorias.length; i++){
+				console.log(i);
                 if(categorias[i]._id !== null){
-					await Producto.aggregate([
-					   {$match:
-						   {
-						   $or: [{categoria: categorias[i]._id}],
-						   }
-					   },
-					   {
-						   $group: { _id: '$subCategoria'}
-					   }
-					   ],async function(err,subCategoriasBase){
-						   arrayCategorias.push({
-							   categoria: categorias[i]._id,
-							   subcCategoria: subCategoriasBase
-						   });
-					   });
+					console.log("entro",i);
+					if(categorias[i]._id){
+						await Producto.aggregate([
+							{$match:
+								{
+								$or: [{categoria: categorias[i]._id}],
+								}
+							},
+							{
+								$group: { _id: '$subCategoria'}
+							}
+							],async function(err,subCategoriasBase){
+								console.log(subCategoriasBase);
+								console.log(categorias[i]._id);
+								arrayCategorias.push({
+									categoria: categorias[i]._id,
+									subcCategoria: subCategoriasBase
+								});
+							});
+					}
 				   }
-                if(categorias.length === i + 1){
+				   
+                /* if(categorias.length === (i + 1)){
                     res.status(200).json(arrayCategorias);
-                    console.log(arrayCategorias);
-                }
-            }
+                } */
+			}
+			res.status(200).json(arrayCategorias);
+			console.log(arrayCategorias);
+			/* await categorias.forEach(async (item,index) => {
+				arrayCategorias = []
+				if(categorias.lenght === (index + 1) ){
+					return arrayCategorias
+				}else{
+					if(item._id !== null){
+						await Producto.aggregate([
+						   {$match:
+							   {
+							   $or: [{categoria: item._id}],
+							   }
+						   },
+						   {
+							   $group: { _id: '$subCategoria'}
+						   }
+						   ],async function(err,subCategoriasBase){
+							   arrayCategorias.push({
+								   categoria: item._id,
+								   subcCategoria: subCategoriasBase
+							   });
+						   });
+					   }
+				}
+			});
+			await sleep(3000)
+			if(arrayCategorias.length !== 0){
+				res.status(200).json(arrayCategorias);
+			} else {
+				res.status(200).json([]);
+			} */
+			
 		});
 	} catch (err) {
 		res.status(500).json({ message: 'Error en el servidor', err });
@@ -890,6 +927,7 @@ productosCtrl.crecarFiltrosNavbar = async (req, res, next) => {
 productosCtrl.importacionExcel = async (req,res) => {
 	try {
 		const {data} = req.body;
+		console.log(data);
 		if(data.length){
 			data.map(async (producto) => {
 				const existProduto = await Producto.find({codigo: producto.Codigo_de_barras});

@@ -44,9 +44,7 @@ bannerCtrl.editBanner = async (req,res) => {
         const newbanner = req.body;
         if(req.file){
             newbanner.imagenBanner = req.file.key;
-            if(!bannerBase.imagenBanner || bannerBase.imagenBanner === ""){
-                
-            }else{
+            if(bannerBase.imagenBanner || bannerBase.imagenBanner !== ""){
                 await imagen.eliminarImagen(bannerBase.imagenBanner)
             }
         }else{
