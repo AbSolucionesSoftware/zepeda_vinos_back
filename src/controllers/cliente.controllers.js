@@ -218,8 +218,6 @@ function makeid(length) {
 		res.status(200).json(clientes);
 	} catch (err) {
 		res.status(500).json({ message: "Error en el servidor",err })	
-		console.log(error);
-		next();
 	}
 }; */
 clienteCtrl.getClientes = async (req, res, next) => {
