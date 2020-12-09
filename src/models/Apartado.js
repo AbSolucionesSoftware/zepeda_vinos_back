@@ -13,7 +13,9 @@ const ApartadoSchema = new Schema({
     },
     cantidad: {
         type: Number,
-        required: true
+    },
+    precio: {
+        type: String
     },
     medida: [{
         talla: String,
@@ -40,6 +42,16 @@ const ApartadoSchema = new Schema({
         type: Date
     },
     eliminado: Boolean,
+    apartadoMultiple: [{
+        producto: Schema.ObjectId,
+        cantidad: Number,
+        medida: {
+            talla: String,
+            numero: String
+        },
+        precio: String
+    }],
+    total: String
 },
 {
     timestamps: true
